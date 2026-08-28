@@ -4,13 +4,59 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-const navigationItems = [
-    { label: "الرئيسية", description: "ملخص حسابك", active: true },
-    { label: "ملف الفيلا", description: "بيانات الفيلا وصورها" },
-    { label: "الحجوزات", description: "إدارة الحجوزات القادمة" },
-    { label: "التقارير", description: "الأداء والإيرادات" },
-    { label: "الإشعارات", description: "آخر التنبيهات" },
-    { label: "الدعم", description: "تواصل مع الفريق" },
+const sections = [
+    {
+        label: "ملف الفيلا",
+        desc: "بيانات الفيلا وصورها",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                <polyline points="9 22 9 12 15 12 15 22" />
+            </svg>
+        ),
+    },
+    {
+        label: "الحجوزات",
+        desc: "إدارة الحجوزات القادمة",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                <line x1="16" y1="2" x2="16" y2="6" />
+                <line x1="8" y1="2" x2="8" y2="6" />
+                <line x1="3" y1="10" x2="21" y2="10" />
+            </svg>
+        ),
+    },
+    {
+        label: "التقارير",
+        desc: "الأداء والإيرادات",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10" />
+                <line x1="12" y1="20" x2="12" y2="4" />
+                <line x1="6" y1="20" x2="6" y2="14" />
+            </svg>
+        ),
+    },
+    {
+        label: "الإشعارات",
+        desc: "آخر التنبيهات",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+        ),
+    },
+    {
+        label: "الدعم",
+        desc: "تواصل مع الفريق",
+        icon: (
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+        ),
+    },
 ];
 
 interface Props {
@@ -25,7 +71,12 @@ interface Props {
     deadline: string | null;
 }
 
-export default function VillaDashboardClient({ fullName, manager, needsNewContract, deadline }: Props) {
+export default function VillaDashboardClient({
+    fullName,
+    manager,
+    needsNewContract,
+    deadline,
+}: Props) {
     const [downloadLoading, setDownloadLoading] = useState(false);
     const [downloadError, setDownloadError] = useState<string | null>(null);
     const [logoutLoading, setLogoutLoading] = useState(false);
@@ -38,7 +89,6 @@ export default function VillaDashboardClient({ fullName, manager, needsNewContra
             const res = await fetch("/api/contract-download");
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || "فشل في تحميل العقد");
-            // فتح رابط التحميل المباشر
             window.open(data.url, "_blank");
         } catch (err: unknown) {
             setDownloadError(
@@ -58,166 +108,178 @@ export default function VillaDashboardClient({ fullName, manager, needsNewContra
 
     const joinDate = manager?.created_at
         ? new Date(manager.created_at).toLocaleDateString("ar-EG", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-          })
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        })
         : "";
 
     return (
-        <main className="min-h-screen bg-[var(--color-sand)] p-4 sm:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
-                <aside className="bg-[var(--color-palm)] text-[var(--color-panel)] rounded-2xl p-4 mb-6 lg:mb-0 lg:min-h-[calc(100vh-4rem)] lg:sticky lg:top-8 lg:self-start">
-                    <div className="px-3 pt-2 pb-5">
-                        <p className="font-tajawal text-xs tracking-widest text-[var(--color-gold)] uppercase">Jericho Vibes</p>
-                        <h2 className="font-amiri text-2xl mt-1">بوابة المالك</h2>
-                    </div>
-                    <nav aria-label="التنقل في لوحة المالك" className="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible">
-                        {navigationItems.map((item) => (
-                            <button
-                                key={item.label}
-                                type="button"
-                                aria-current={item.active ? "page" : undefined}
-                                title={item.description}
-                                className={`shrink-0 text-right font-tajawal rounded-xl px-3 py-3 transition lg:w-full ${item.active
-                                    ? "bg-[var(--color-gold)] text-[var(--color-ink)]"
-                                    : "text-[var(--color-panel)]/80 hover:bg-white/10"
-                                    }`}
-                            >
-                                <span className="block text-sm font-medium">{item.label}</span>
-                                <span className="hidden lg:block text-xs opacity-65 mt-0.5">{item.description}</span>
-                            </button>
-                        ))}
-                    </nav>
-                    <p className="hidden lg:block font-tajawal text-xs text-[var(--color-panel)]/45 px-3 pt-6">
-                        الأقسام الأخرى قيد التجهيز.
-                    </p>
-                </aside>
+        <div className="min-h-screen bg-[#F5F7F8]">
 
-                <div className="space-y-6">
-                
+            {/* ═══ شريط علوي ═══ */}
+            <header className="sticky top-0 z-30 bg-white/80 backdrop-blur-lg border-b border-[#E8ECE9]">
+                <div className="max-w-3xl mx-auto flex items-center justify-between px-5 h-14">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-lg bg-[#00ADB5] flex items-center justify-center">
+                            <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                                <polyline points="9 22 9 12 15 12 15 22" />
+                            </svg>
+                        </div>
+                        <span className="font-tajawal text-xs font-medium tracking-widest text-[#006666]">
+                            JERICHO VIBES
+                        </span>
+                    </div>
+
+                    <button
+                        onClick={handleLogout}
+                        disabled={logoutLoading}
+                        className="font-tajawal text-xs text-[#666666] hover:text-[#212121] transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                    >
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                        {logoutLoading ? "جاري..." : "خروج"}
+                    </button>
+                </div>
+            </header>
+
+            {/* ═══ محتوى رئيسي ═══ */}
+            <div className="max-w-3xl mx-auto px-5 py-6 space-y-5">
+
+                {/* ── تنبيه العقد الجديد ── */}
                 {needsNewContract && (
-                    <div className="bg-amber-50 border-r-4 border-amber-500 p-4 rounded-xl shadow-sm text-right" dir="rtl">
-                        <div className="flex flex-col gap-3">
-                            <div>
-                                <h3 className="font-amiri text-lg text-amber-800 font-bold mb-1">
+                    <div className="bg-[#FFF8E1] border border-[#FFD54F]/40 rounded-2xl p-5">
+                        <div className="flex items-start gap-3.5">
+                            <div className="w-9 h-9 rounded-xl bg-[#FFB300]/15 flex items-center justify-center shrink-0 mt-0.5">
+                                <svg className="w-4.5 h-4.5 text-[#F57F17]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                                    <line x1="12" y1="9" x2="12" y2="13" />
+                                    <line x1="12" y1="17" x2="12.01" y2="17" />
+                                </svg>
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <h3 className="font-tajawal font-bold text-sm text-[#E65100] mb-1">
                                     تحديث هام للعقد
                                 </h3>
-                                <p className="font-tajawal text-sm text-amber-700">
-                                    تم إصدار نسخة جديدة من عقد إدراج الفلل. يرجى الاطلاع على البنود الجديدة والموافقة عليها لضمان استمرار وصولك للوحة التحكم. 
-                                    <br/>
-                                    أمامك مهلة حتى تاريخ: <span className="font-bold">{deadline ? new Date(deadline).toLocaleString("ar-EG") : ""}</span>
+                                <p className="font-tajawal text-xs text-[#BF360C]/80 leading-relaxed mb-3">
+                                    تم إصدار نسخة جديدة من عقد الإدراج. يرجى الاطلاع على البنود
+                                    والموافقة عليها لضمان استمرار وصولك للوحة التحكم.
+                                    {deadline && (
+                                        <>
+                                            {" "}المهلة:{" "}
+                                            <span className="font-bold text-[#E65100]">
+                                                {new Date(deadline).toLocaleDateString("ar-EG", {
+                                                    year: "numeric",
+                                                    month: "long",
+                                                    day: "numeric",
+                                                })}
+                                            </span>
+                                        </>
+                                    )}
                                 </p>
+                                <button
+                                    onClick={() => router.push("/dashboard/apply/contract")}
+                                    className="font-tajawal text-xs font-medium bg-[#F57F17] text-white px-5 py-2 rounded-xl hover:bg-[#E65100] transition-colors"
+                                >
+                                    قراءة وتوقيع العقد الجديد
+                                </button>
                             </div>
-                            <button
-                                onClick={() => router.push("/dashboard/apply/contract")}
-                                className="font-tajawal text-sm bg-amber-500 text-white px-4 py-2 rounded-lg hover:bg-amber-600 transition w-fit"
-                            >
-                                قراءة وتوقيع العقد الجديد
-                            </button>
                         </div>
                     </div>
                 )}
 
-                {/* رأس الصفحة */}
-                <div className="bg-[var(--color-palm)] text-[var(--color-panel)] rounded-2xl p-8 relative overflow-hidden">
-                    <svg
-                        className="absolute inset-0 w-full h-full opacity-10"
-                        viewBox="0 0 400 200"
-                    >
-                        <circle cx="350" cy="100" r="120" fill="var(--color-gold)" />
-                        <circle cx="50" cy="150" r="80" fill="var(--color-gold)" />
-                    </svg>
-                    <div className="relative z-10">
-                        <p className="font-tajawal text-xs tracking-widest text-[var(--color-gold)] mb-2 uppercase">
-                            Jericho Vibes — لوحة مالك الفيلا
+                {/* ── بطاقة الترحيب ── */}
+                <div className="bg-gradient-to-l from-[#00ADB5] to-[#006666] rounded-2xl p-6 text-white">
+                    <p className="font-tajawal text-xs text-white/60 mb-1">مرحباً بك</p>
+                    <h1 className="font-amiri text-2xl mb-1">{fullName}</h1>
+                    {joinDate && (
+                        <p className="font-tajawal text-xs text-white/50">
+                            عضو منذ {joinDate}
                         </p>
-                        <h1 className="font-amiri text-3xl mb-1">أهلاً، {fullName}</h1>
-                        <p className="font-tajawal text-sm text-[var(--color-panel)]/70">
-                            انضممت إلينا {joinDate}
-                        </p>
-                    </div>
+                    )}
                 </div>
 
-                {/* بطاقات الإحصائيات (عناصر نائبة) */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="bg-[var(--color-panel)] rounded-2xl border border-[var(--color-clay)]/15 p-6 flex flex-col justify-between">
-                        <p className="font-tajawal text-sm text-[var(--color-ink)]/60 mb-2">إجمالي المشاهدات</p>
-                        <h3 className="font-amiri text-2xl text-[var(--color-ink)] font-bold">٢,٤٥٠</h3>
-                        <p className="font-tajawal text-xs text-green-600 mt-2">+12% منذ الشهر الماضي</p>
-                    </div>
-                    <div className="bg-[var(--color-panel)] rounded-2xl border border-[var(--color-clay)]/15 p-6 flex flex-col justify-between">
-                        <p className="font-tajawal text-sm text-[var(--color-ink)]/60 mb-2">الحجوزات القادمة</p>
-                        <h3 className="font-amiri text-2xl text-[var(--color-ink)] font-bold">٥</h3>
-                        <p className="font-tajawal text-xs text-[var(--color-ink)]/50 mt-2">خلال الـ 30 يوم القادمة</p>
-                    </div>
-                    <div className="bg-[var(--color-panel)] rounded-2xl border border-[var(--color-clay)]/15 p-6 flex flex-col justify-between">
-                        <p className="font-tajawal text-sm text-[var(--color-ink)]/60 mb-2">الإيرادات المتوقعة</p>
-                        <h3 className="font-amiri text-2xl text-[var(--color-ink)] font-bold">₪ ٤,٢٠٠</h3>
-                        <p className="font-tajawal text-xs text-green-600 mt-2">سيتم تحويلها قريباً</p>
-                    </div>
-                </div>
-
-                {/* حالة الحساب والعقد */}
-                <div className="bg-[var(--color-panel)] rounded-2xl border border-[var(--color-clay)]/15 p-6">
-                    <h3 className="font-amiri text-xl mb-4 border-b border-[var(--color-clay)]/10 pb-4">حالة الحساب</h3>
-                    
-                    <div className="flex items-center justify-between mb-6">
+                {/* ── حالة العقد ── */}
+                <div className="bg-white rounded-2xl border border-[#E8ECE9] p-5">
+                    <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                <svg viewBox="0 0 24 24" fill="none" className="w-6 h-6" stroke="currentColor" strokeWidth="2">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                            <div className="w-10 h-10 rounded-xl bg-[#E0F7FA] flex items-center justify-center">
+                                <svg className="w-5 h-5 text-[#00ADB5]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                                 </svg>
                             </div>
                             <div>
-                                <p className="font-tajawal font-bold text-[var(--color-ink)]">الحساب نشط</p>
-                                <p className="font-tajawal text-xs text-[var(--color-ink)]/60">يمكنك استقبال الحجوزات الآن</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-[var(--color-sand)] rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 mb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-[var(--color-clay)]/10 flex items-center justify-center">
-                                <svg viewBox="0 0 24 24" fill="none" className="w-5 h-5 text-[var(--color-clay)]" stroke="currentColor" strokeWidth="1.5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                                </svg>
-                            </div>
-                            <div>
-                                <h4 className="font-tajawal font-medium text-[var(--color-ink)] flex items-center gap-2">
-                                    عقد الإدراج الإلكتروني
-                                    <span className="font-tajawal text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">تم التوقيع</span>
-                                </h4>
-                                <p className="font-tajawal text-xs text-[var(--color-ink)]/50 mt-1">نسخة محفوظة وموثقة بالبصمة الرقمية</p>
+                                <div className="flex items-center gap-2">
+                                    <p className="font-tajawal text-sm font-bold text-[#212121]">
+                                        عقد الإدراج
+                                    </p>
+                                    <span className="font-tajawal text-[10px] bg-[#E8F5E9] text-[#2E7D32] px-2 py-0.5 rounded-full font-medium">
+                                        مُوقَّع
+                                    </span>
+                                </div>
+                                <p className="font-tajawal text-[11px] text-[#666666] mt-0.5">
+                                    نسخة موثقة بالبصمة الرقمية
+                                </p>
                             </div>
                         </div>
 
                         <button
                             onClick={handleDownloadContract}
                             disabled={downloadLoading}
-                            className="font-tajawal text-sm text-[var(--color-panel)] bg-[var(--color-clay)] rounded-lg px-4 py-2 transition hover:opacity-90 disabled:opacity-50 flex items-center gap-2 shrink-0"
+                            className="font-tajawal text-xs font-medium text-white bg-[#00ADB5] px-4 py-2.5 rounded-xl hover:bg-[#006666] transition-colors disabled:opacity-50 flex items-center gap-1.5 shrink-0"
                         >
-                            {downloadLoading ? "جاري..." : "تحميل (PDF)"}
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            {downloadLoading ? "جاري..." : "PDF"}
                         </button>
                     </div>
 
                     {downloadError && (
-                        <p className="font-tajawal text-sm text-red-600 bg-red-50 p-3 rounded-lg mb-4">
+                        <p className="font-tajawal text-xs text-[#D32F2F] bg-[#FFEBEE] mt-3 p-3 rounded-xl">
                             {downloadError}
                         </p>
                     )}
                 </div>
 
-                {/* زر تسجيل الخروج */}
-                <button
-                    onClick={handleLogout}
-                    disabled={logoutLoading}
-                    className="w-full font-tajawal text-sm text-[var(--color-ink)]/60 hover:text-[var(--color-ink)] border border-[var(--color-clay)]/15 rounded-xl py-3 transition hover:bg-[var(--color-ink)]/5 disabled:opacity-50"
-                >
-                    {logoutLoading ? "جاري الخروج..." : "تسجيل الخروج"}
-                </button>
+                {/* ── شبكة الأقسام ── */}
+                <div>
+                    <h2 className="font-tajawal text-xs font-medium text-[#666666] mb-3 px-1">
+                        الأقسام
+                    </h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {sections.map((item) => (
+                            <div
+                                key={item.label}
+                                className="bg-white rounded-2xl border border-[#E8ECE9] p-5 flex flex-col items-center text-center gap-3 cursor-default group"
+                            >
+                                <div className="w-11 h-11 rounded-2xl bg-[#F5F7F8] group-hover:bg-[#E0F7FA] flex items-center justify-center text-[#999999] group-hover:text-[#00ADB5] transition-colors">
+                                    {item.icon}
+                                </div>
+                                <div>
+                                    <p className="font-tajawal text-sm font-medium text-[#212121]">
+                                        {item.label}
+                                    </p>
+                                    <p className="font-tajawal text-[10px] text-[#00ADB5] font-medium mt-1 tracking-wide">
+                                        قريباً
+                                    </p>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
+
+                {/* ── تذييل ── */}
+                <p className="font-tajawal text-[10px] text-[#BBBBBB] text-center pt-4 pb-2">
+                    Jericho Vibes — بوابة أصحاب الفلل
+                </p>
             </div>
-        </main>
+        </div>
     );
 }
