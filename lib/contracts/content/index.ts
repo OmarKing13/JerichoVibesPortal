@@ -9,6 +9,6 @@ const contractContentByVersion: Record<string, ContractContent> = {
     [contractV2.version]: contractV2,
 };
 
-export function getContractContent(version: string) {
+export function getContractContent(version: string): ContractContent | null {
     return contractContentByVersion[version] ?? null;
 }

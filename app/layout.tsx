@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Amiri, Tajawal } from "next/font/google";
 import "./globals.css";
 
@@ -19,6 +19,10 @@ const tajawal = Tajawal({
 export const metadata: Metadata = {
   title: "بوابة أصحاب الفلل | Jericho Vibes",
   description: "بوابة أصحاب الفلل لمراجعة العقد والتوقيع عليه إلكترونياً",
+};
+
+export const viewport: Viewport = {
+  // ✅ مكانه هنا
   themeColor: "#00ADB5",
 };
 

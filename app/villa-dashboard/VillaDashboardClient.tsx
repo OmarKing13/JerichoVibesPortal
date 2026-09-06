@@ -8,6 +8,8 @@ const sections = [
     {
         label: "ملف الفيلا",
         desc: "بيانات الفيلا وصورها",
+        href: "/villa-dashboard/villas",
+        badge: "عرض وإدارة",
         icon: (
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -254,24 +256,44 @@ export default function VillaDashboardClient({
                         الأقسام
                     </h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {sections.map((item) => (
-                            <div
-                                key={item.label}
-                                className="bg-white rounded-2xl border border-[#E8ECE9] p-5 flex flex-col items-center text-center gap-3 cursor-default group"
-                            >
-                                <div className="w-11 h-11 rounded-2xl bg-[#F5F7F8] group-hover:bg-[#E0F7FA] flex items-center justify-center text-[#999999] group-hover:text-[#00ADB5] transition-colors">
-                                    {item.icon}
+                        {sections.map((item) => {
+                            const isClickable = !!item.href;
+                            return (
+                                <div
+                                    key={item.label}
+                                    onClick={() => isClickable && router.push(item.href!)}
+                                    className={`bg-white rounded-2xl border p-5 flex flex-col items-center text-center gap-3 transition-all ${
+                                        isClickable
+                                            ? "border-[#00ADB5]/40 hover:border-[#00ADB5] hover:shadow-lg hover:-translate-y-0.5 cursor-pointer bg-gradient-to-b from-white to-[#F0FDFA]/30"
+                                            : "border-[#E8ECE9] cursor-default opacity-85"
+                                    } group`}
+                                >
+                                    <div
+                                        className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-colors ${
+                                            isClickable
+                                                ? "bg-[#E0F7FA] text-[#00ADB5] group-hover:bg-[#00ADB5] group-hover:text-white"
+                                                : "bg-[#F5F7F8] text-[#999999]"
+                                        }`}
+                                    >
+                                        {item.icon}
+                                    </div>
+                                    <div>
+                                        <p className="font-tajawal text-sm font-bold text-[#212121]">
+                                            {item.label}
+                                        </p>
+                                        <p
+                                            className={`font-tajawal text-[10px] font-medium mt-1 tracking-wide ${
+                                                isClickable
+                                                    ? "text-[#00ADB5] font-bold"
+                                                    : "text-[#999999]"
+                                            }`}
+                                        >
+                                            {item.badge || "قريباً"}
+                                        </p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <p className="font-tajawal text-sm font-medium text-[#212121]">
-                                        {item.label}
-                                    </p>
-                                    <p className="font-tajawal text-[10px] text-[#00ADB5] font-medium mt-1 tracking-wide">
-                                        قريباً
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
 

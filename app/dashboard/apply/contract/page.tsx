@@ -11,7 +11,6 @@ export default async function ContractPage() {
         redirect("/login");
     }
 
-    // جلب بيانات المدير الذي لم يوقع العقد بعد
     const { data: manager } = await supabase
         .from("managers")
         .select("*")
@@ -20,7 +19,6 @@ export default async function ContractPage() {
         .maybeSingle();
 
     if (!manager) {
-        // إذا لم يكن لديه طلب معلق، نعيده للداشبورد أو صفحة التقديم
         redirect("/dashboard");
     }
 
@@ -42,8 +40,10 @@ export default async function ContractPage() {
     const isRenewal = manager.status === "active";
 
     return (
-        <main className="min-h-screen bg-[var(--color-sand)] py-6 px-4">
-            <ContractClient manager={manager} content={contractContent} isRenewal={isRenewal} />
-        </main>
+        <ContractClient
+            manager={manager}
+            content={contractContent}
+            isRenewal={isRenewal}
+        />
     );
 }

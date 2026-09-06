@@ -1,14 +1,16 @@
+import type { ContractData } from "../content/types";
 import { ContractV1 } from "./v1";
 import { ContractV2 } from "./v2";
 
-export type ContractTemplateProps = {
+export interface ContractTemplateProps {
+    contractData: ContractData;
     managerName: string;
     nationalId: string;
     phoneNumber: string;
     ipAddress: string;
     userAgent: string;
     date: string;
-};
+}
 
 const templates: Record<string, React.ComponentType<ContractTemplateProps>> = {
     "1.0.0": ContractV1,

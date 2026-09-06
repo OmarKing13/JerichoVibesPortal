@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { headers } from "next/headers";
 import { getContractTemplate } from "@/lib/contracts/templates";
+import { getContractContent } from "@/lib/contracts/content";
 import { createElement } from "react";
 
 export async function POST(req: Request) {
@@ -19,7 +20,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "غير مصرح لك" }, { status: 401 });
         }
 
-        // استخراج IP و UserAgent بشكل صحيح
         const headersList = await headers();
         const ipAddress =
             headersList.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -27,7 +27,6 @@ export async function POST(req: Request) {
             "unknown";
         const userAgent = req.headers.get("user-agent") || "Unknown";
 
-        // التأكد من أن الطلب يخص المستخدم (يمكن أن يكون معلق أو نشط ليتمكن من تجديد العقد)
         const { data: manager, error: managerError } = await supabase
             .from("managers")
             .select("*")
@@ -40,7 +39,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "الطلب غير موجود أو تمت معالجته بالفعل" }, { status: 404 });
         }
 
-        // جلب نسخة العقد الفعالة
         const { data: template, error: templateError } = await supabase
             .from("contract_templates")
             .select("id, version")
@@ -54,26 +52,38 @@ export async function POST(req: Request) {
         const ContractTemplate = getContractTemplate(template.version);
         if (!ContractTemplate) {
             return NextResponse.json(
-                { error: `نسخة العقد ${template.version} غير مدعومة في التطبيق` },
+                { error: `نسخة العقد ${template.version} غير مدعومة` },
                 { status: 500 }
             );
         }
 
-        const currentDate = new Date().toLocaleDateString('ar-EG', {
-            year: 'numeric', month: 'long', day: 'numeric'
+        // ← جلب المحتوى المنظّم
+        const contractContent = getContractContent(template.version);
+        if (!contractContent) {
+            return NextResponse.json(
+                { error: `محتوى العقد ${template.version} غير موجود` },
+                { status: 500 }
+            );
+        }
+
+        const currentDate = new Date().toLocaleDateString("ar-EG", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
         });
 
-        // توليد الـ PDF
         const ReactPdf = await import("@react-pdf/renderer");
-        
+
         const contractDocument = createElement(ContractTemplate, {
-                managerName: manager.name,
-                nationalId: manager.national_id,
-                phoneNumber: manager.phone_number,
-                ipAddress,
-                userAgent,
-                date: currentDate,
-            }) as unknown as Parameters<typeof ReactPdf.renderToStream>[0];
+            contractData: contractContent.contract,  // ← الهيكل الجديد
+            managerName: manager.name,
+            nationalId: manager.national_id,
+            phoneNumber: manager.phone_number,
+            ipAddress,
+            userAgent,
+            date: currentDate,
+        }) as unknown as Parameters<typeof ReactPdf.renderToStream>[0];
+
         const stream = await ReactPdf.renderToStream(contractDocument);
 
         const chunks: Buffer[] = [];
@@ -82,28 +92,27 @@ export async function POST(req: Request) {
         }
         const pdfBuffer = Buffer.concat(chunks);
 
-        // حساب البصمة Hash
         const crypto = await import("crypto");
-        const contractHash = crypto.createHash('sha256').update(pdfBuffer).digest('hex');
+        const contractHash = crypto.createHash("sha256").update(pdfBuffer).digest("hex");
 
-        // رفع الملف لـ Supabase Storage
-        // البصمة تجعل اسم الملف فريداً وقابلاً للتدقيق من دون الاعتماد على وقت الخادم.
         const fileName = `${managerId}-${contractHash}.pdf`;
         const { error: uploadError } = await supabase.storage
             .from("contracts")
             .upload(fileName, pdfBuffer, {
-                contentType: 'application/pdf',
-                upsert: false
+                contentType: "application/pdf",
+                upsert: false,
             });
 
         if (uploadError) {
             console.error("Storage upload error:", uploadError);
-            return NextResponse.json({ error: "فشل في رفع العقد، الرجاء التأكد من إعدادات سلة Storage" }, { status: 500 });
+            return NextResponse.json(
+                { error: "فشل في رفع العقد" },
+                { status: 500 }
+            );
         }
 
-        const pdfStorageUrl = `contracts/${fileName}`; // المسار
+        const pdfStorageUrl = `contracts/${fileName}`;
 
-        // تسجيل العقد
         const { error: contractError } = await supabase
             .from("manager_contracts")
             .insert({
@@ -113,7 +122,7 @@ export async function POST(req: Request) {
                 user_agent: userAgent,
                 pdf_storage_url: pdfStorageUrl,
                 contract_hash: contractHash,
-                agreed_to_terms: true
+                agreed_to_terms: true,
             });
 
         if (contractError) {
@@ -121,13 +130,11 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "فشل في تسجيل العقد" }, { status: 500 });
         }
 
-        // تحديث حالة المدير
         await supabase
             .from("managers")
             .update({ status: "active" })
             .eq("id", manager.id);
 
-        // تحديث حالة المستخدم إلى مالك فيلا 
         await supabase
             .from("profiles")
             .update({ role: "villa_owner" })
